@@ -6,16 +6,10 @@ const fs = require("fs")
 const path = require("path"); // Require the path module
 const basicAuth = require('express-basic-auth')
 
-const token = "FOOBAR";
-const tokenCookie = {
-  path: "/",
-  httpOnly: true,
-  expires: new Date(Date.now() + 60 * 60 * 1000),
-};
-res.cookie("auth-token", token, tokenCookie);
 
 
-const customAuthorizer  = (username, password, cb) => {
+
+const clearPasswordAuthorizer  = (username, password, cb) => {
   if (!username || !password) {
     return cb(new Error("Username or password were not defined"), false);
   }
@@ -52,10 +46,47 @@ const customAuthorizer  = (username, password, cb) => {
   });
 };
 
+const encryptedPasswordAuthorizer = (username, password, cb) => {
+  if (!username || !password) {
+    return cb(new Error("Username or password were not defined"), false);
+  }
+  // Parse the CSV file: this is very similar to parsing students!
+  parseCsvWithHeader("./users_encrypted.csv", (err, users) => {
+    // Check that our current user belong to the list
+    const storedUser = users.find((possibleUser) => {
+      if (!possibleUser.username) {
+        console.warn(
+          "Found a user with no username in users.csv",
+          possibleUser
+        );
+        return false;
+      }
+      // NOTE: a simple comparison with === is possible but less safe
+      return basicAuth.safeCompare(possibleUser.username, username);
+    });
+    if (!storedUser) {
+      cb(null, false);
+    } else if (!storedUser.password) {
+      console.warn(
+        "Found a user with no password in users.csv",
+        storedUser
+      );
+      cb(null, false);
+    } else {
+      // now we check the password
+      // bcrypt handles the fact that storedUser password is encrypted
+      // it is asynchronous, because this operation is long
+      // so we pass the callback as the last parameter
+      bcrypt.compare(password, storedUser.password, cb);
+    }
+  });
+};
 
 app.use(basicAuth({
-  authorizer: customAuthorizer,
-  challenge: true
+  authorizer: encryptedPasswordAuthorizer,
+  challenge: true,
+  authorizeAsync: true,
+
 }))
 
 app.use(express.urlencoded({ extended: true })); // This line enables parsing of URL-encoded data
