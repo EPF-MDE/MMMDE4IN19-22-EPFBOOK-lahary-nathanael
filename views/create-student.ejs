@@ -1,26 +1,7 @@
-<!-- /views/create-student.ejs -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Student</title>
-    <link rel="stylesheet" type="text/css" href="/style.css">
-
-</head>
-<body>
-    <h1>Add a Skill</h1>
-    <form action="/students/create" method="POST">
-        <div>
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="name" required>
-        </div>
-        <div>
-            <label for="school">School:</label>
-            <input type="text" id="school" name="school" required>
-        </div>
-        <button type="submit">Add Student</button>
-    </form>
-    
-</body>
-</html>
+<form method="POST">
+    <label for="name">Name</label>
+    <input type="text" name="name" required/>
+    <label for="school">School</label>
+    <input type="text" name="school" required />
+    <button type="submit">Add new student</button>
+</form>
