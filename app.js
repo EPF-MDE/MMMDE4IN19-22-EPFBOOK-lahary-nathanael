@@ -6,7 +6,23 @@ const basicAuth = require("express-basic-auth");
 const bcrypt = require("bcrypt");
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
+
+const mongoose = require("mongoose");
+mongoose
+  .connect("mongodb://localhost:27017/epfbook", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log("Succesfully connected to a local Mongo database.");
+  })
+  .catch((err) => {
+    console.error("Could not connect to local Mongo  database! Is it running?");
+    console.error("Error:", err);
+  });
+
+require("./models/Student");
 
 // Server configuration
 // Enable JSON requests/responses
@@ -112,6 +128,7 @@ const encryptedPasswordAuthorizer = (username, password, cb) => {
 };
 
 // Setup basic authentication
+/*
 app.use(
   basicAuth({
     // Basic hard-coded version:
@@ -127,6 +144,7 @@ app.use(
     challenge: true,
   })
 );
+*/
 
 /**
  * CSV parsing (for files with a header and 2 columns only)
@@ -227,6 +245,30 @@ app.post("/students/create", (req, res) => {
   });
 });
 
+// With mongoose
+app.post("/students/create-in-db", (req, res) => {
+  mongoose
+    .model("Student")
+    .create(
+      { name: req.body.name, school: req.body.school },
+      (err, createResult) => {
+        if (err) {
+          console.error(err);
+          throw new Error("Could not create student");
+        }
+        res.send(createResult);
+      }
+    );
+});
+app.get("/students/find-from-db", (req, res) => {
+  mongoose.model("Student").find((err, students) => {
+    if (err) {
+      console.error(err);
+      throw new Error("Could not create student");
+    }
+    res.send(students);
+  });
+});
 // JSON API
 
 // Not real login but just a demo of setting an auth token
